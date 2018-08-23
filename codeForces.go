@@ -31,13 +31,6 @@ func GetCodeForces() ([]RawContest, bool) {
 		log.Printf("Faild to GET reqest(Codeforces): %v", err)
 		return nil, false
 	}
-	/*
-		if err != nil {
-			panic(err)
-		} else if res.StatusCode != 200 {
-			fmt.Errorf("Unable to get this url : http status %d", res.StatusCode)
-		}
-	*/
 	defer res.Body.Close()
 
 	// 取得したデータを読み込み[]byteを返してもらう
@@ -46,11 +39,6 @@ func GetCodeForces() ([]RawContest, bool) {
 		log.Printf("Faild to read data(Codeforces): %v", err)
 		return nil, false
 	}
-	/*
-		if err != nil {
-			panic(err)
-		}
-	*/
 
 	// jsonを解析してCodeForcesの構造体にデータを入れる
 	var codeForces CodeForces
