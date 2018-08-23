@@ -101,19 +101,25 @@ func SetContestData() bool {
 	var contestTable RawContestTable
 	atCoder, ok := GetAtCoder()
 	if !ok {
-		return false
+		log.Print("Faild to get atcoder")
 	}
 	codeForces, ok := GetCodeForces()
 	if !ok {
-		return false
+		log.Print("Faild to get Codeforces")
 	}
 	csa, ok := GetCSA()
 	if !ok {
-		return false
+		log.Print("Faild to get CS Academy")
 	}
+	yukicoder, ok := GetYukicoder()
+	if !ok {
+		log.Print("Faild to get yukicoder")
+	}
+
 	contestTable.Future = append(contestTable.Future, atCoder...)
 	contestTable.Future = append(contestTable.Future, codeForces...)
 	contestTable.Future = append(contestTable.Future, csa...)
+	contestTable.Future = append(contestTable.Future, yukicoder...)
 	sort.Slice(contestTable.Future, func(i, j int) bool { return contestTable.Future[i].StartTime < contestTable.Future[j].StartTime })
 
 	// コンテスト情報を書き込むJSONファイルを生成
