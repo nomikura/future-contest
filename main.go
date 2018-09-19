@@ -196,6 +196,7 @@ func main() {
 	}()
 
 	http.HandleFunc("/", handle)
+	http.HandleFunc("/img/favicon.png", faviconHandler)
 	http.HandleFunc("/_ah/health", healthCheckHandler)
 	log.Print("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -210,6 +211,10 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	t, _ := template.ParseFiles("tmpl.html")
 	contestTable, _ := GetContestData()
 	t.Execute(w, contestTable.Future)
+}
+
+func faviconHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "favicon.png")
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
