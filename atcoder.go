@@ -17,7 +17,7 @@ type AtCoder struct {
 }
 
 func GetAtCoder() ([]RawContest, bool) {
-	res, err := http.Get("https://atcoder-tools.appspot.com/contests")
+	res, err := http.Get("https://atcoder-api.appspot.com/contests")
 	if err != nil {
 		log.Printf("Faild to GET reqest(AtCoder): %v", err)
 		return nil, false
