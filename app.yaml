@@ -1,12 +1,20 @@
+# runtime: go
+# api_version: go1
+
+# handlers:
+# - url: /.*
+#   script: _go_app
+
+# threadsafe: true
+
+# automatic_scaling:
+#   min_idle_instances: automatic
+#   max_idle_instances: 1
+#   min_pending_latency: 3000ms
+#   max_pending_latency: automatic
+
 runtime: go
 env: flex
-
-# This sample incurs costs to run on the App Engine flexible environment. 
-# The settings below are to reduce costs during testing and are not appropriate
-# for production use. For more information, see:
-# https://cloud.google.com/appengine/docs/flexible/python/configuring-your-app-with-app-yaml
-# manual_scaling:
-#   instances: 1
 
 automatic_scaling:
   min_num_instances: 1
@@ -16,7 +24,5 @@ resources:
   cpu: 1
   memory_gb: 0.5
   disk_size_gb: 10
-
-# I wrote the following setting myself
 
 threadsafe: true

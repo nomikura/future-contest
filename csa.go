@@ -62,7 +62,7 @@ func GetCSA() ([]RawContest, bool) {
 	// リクエストを送信
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Faild to GET reqest(CSA): %v", err)
+		log.Printf("Faild to GET request(CSA): %v", err)
 		return nil, false
 	}
 	defer resp.Body.Close()
@@ -98,7 +98,7 @@ func GetCSA() ([]RawContest, bool) {
 			StartTime:   startTime,
 			URL:         "https://csacademy.com/contest/" + result.Name + "/",
 			Duration:    endTime - startTime,
-			WebSiteName: "CS Academy",
+			WebSiteName: "CSA",
 			WebSiteURL:  "https://csacademy.com/",
 		}
 		contests = append(contests, contest)
