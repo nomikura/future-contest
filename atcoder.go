@@ -9,11 +9,11 @@ import (
 )
 
 type AtCoder struct {
-	Title     string `json:"Title"`
-	Path      string `json:"Path"`
-	StartTime int64  `json:"StartTime"`
-	Duration  int64  `json:"Duration"`
-	Rated     string `json:"Rated"`
+	ID               string `json:"id"`
+	Title            string `json:"title"`
+	StartTimeSeconds int64  `json:"startTimeSeconds"`
+	DurationSeconds  int64  `json:"durationSeconds"`
+	RatedRange       string `json:"ratedRange"`
 }
 
 func GetAtCoder() ([]RawContest, bool) {
@@ -35,15 +35,15 @@ func GetAtCoder() ([]RawContest, bool) {
 
 	var contests []RawContest
 	for _, contestData := range atCoderContests {
-		if time.Now().Unix() >= contestData.StartTime {
+		if time.Now().Unix() >= contestData.StartTimeSeconds {
 			continue
 		}
 
 		contest := RawContest{
 			Name:        contestData.Title,
-			StartTime:   contestData.StartTime,
-			URL:         "https://beta.atcoder.jp" + contestData.Path,
-			Duration:    contestData.Duration,
+			StartTime:   contestData.StartTimeSeconds,
+			URL:         "https://beta.atcoder.jp/contests/" + contestData.ID,
+			Duration:    contestData.DurationSeconds,
 			WebSiteName: "AtCoder",
 			WebSiteURL:  "https://beta.atcoder.jp/",
 		}
