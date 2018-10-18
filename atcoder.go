@@ -1,4 +1,4 @@
-package main
+package future
 
 import (
 	"encoding/json"
@@ -6,49 +6,60 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/urlfetch"
 )
 
 type AtCoder struct {
-	ID               string `json:"id"`
-	Title            string `json:"title"`
-	StartTimeSeconds int64  `json:"startTimeSeconds"`
-	DurationSeconds  int64  `json:"durationSeconds"`
-	RatedRange       string `json:"ratedRange"`
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	StartTime int64  `json:"startTimeSeconds"`
+	Duration  int64  `json:"durationSeconds"`
+	Rated     string `json:"ratedRange"`
 }
 
-func GetAtCoder() ([]RawContest, bool) {
-	res, err := http.Get("https://atcoder-api.appspot.com/contests")
+func (module *ContestModule) SetAtCoder() bool {
+	var request *http.Request = module.Context.Request
+	context := appengine.NewContext(request)
+
+	client := urlfetch.Client(context)
+
+	// GETリクエスト
+	response, err := client.Get("https://atcoder-api.appspot.com/contests")
 	if err != nil {
-		log.Printf("Faild to GET reqest(AtCoder): %v", err)
-		return nil, false
+		log.Print(err)
+		return false
 	}
-	defer res.Body.Close()
 
-	byteArray, err := ioutil.ReadAll(res.Body)
+	// データをバイナリとして取得
+	byteArray, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		log.Printf("Faild to read data(AtCoder): %v", err)
-		return nil, false
+		log.Print(err)
+		return false
 	}
 
-	var atCoderContests []AtCoder
-	json.Unmarshal(byteArray, &atCoderContests)
+	// バイナリをAtCoderのデータにパース
+	var atcoderContests []AtCoder
+	json.Unmarshal(byteArray, &atcoderContests)
 
-	var contests []RawContest
-	for _, contestData := range atCoderContests {
-		if time.Now().Unix() >= contestData.StartTimeSeconds {
+	var contests []Contest
+	for _, contest := range atcoderContests {
+		if time.Now().Unix() >= contest.StartTime {
 			continue
 		}
 
-		contest := RawContest{
-			Name:        contestData.Title,
-			StartTime:   contestData.StartTimeSeconds,
-			URL:         "https://beta.atcoder.jp/contests/" + contestData.ID,
-			Duration:    contestData.DurationSeconds,
-			WebSiteName: "AtCoder",
-			WebSiteURL:  "https://beta.atcoder.jp/",
-		}
-		contests = append(contests, contest)
+		contests = append(contests, Contest{
+			ID:          contest.ID,
+			Title:       contest.Title,
+			StartTime:   contest.StartTime,
+			Duration:    contest.Duration,
+			WebSiteName: "atcoder",
+		})
 	}
 
-	return contests, true
+	// モジュールに入れる
+	module.AtCoder = append(module.AtCoder, contests...)
+
+	return true
 }

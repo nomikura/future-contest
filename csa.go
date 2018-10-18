@@ -1,4 +1,4 @@
-package main
+package future
 
 import (
 	"encoding/json"
@@ -6,6 +6,9 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/urlfetch"
 )
 
 // CSAコンテスト情報
@@ -46,63 +49,63 @@ type CSA struct {
 	} `json:"state"`
 }
 
-// CSAのコンテスト情報を返す
-func GetCSA() ([]RawContest, bool) {
-	client := &http.Client{}
+func (module ContestModule) SetCSA() bool {
+	var r *http.Request = module.Context.Request
+	context := appengine.NewContext(r)
+
+	client := urlfetch.Client(context)
 
 	// リクエストを生成
-	req, err := http.NewRequest("GET", "https://csacademy.com/contests/", nil)
+	request, err := http.NewRequest("GET", "https://csacademy.com/contests/", nil)
 	if err != nil {
-		log.Printf("Faild to create request(CSA): %v", err)
-		return nil, false
+		log.Print(err)
+		return false
 	}
 
-	// リクエストヘッダにこれをつけるとコンテスト情報をJSONで返してくれる
-	req.Header.Add("x-requested-with", "XMLHttpRequest")
-	// リクエストを送信
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("Faild to GET request(CSA): %v", err)
-		return nil, false
-	}
-	defer resp.Body.Close()
+	// リクエストヘッダに情報を追加
+	request.Header.Add("x-requested-with", "XMLHttpRequest")
 
-	// 取得したデータを[]byteにして返して貰う
-	byteArray, err := ioutil.ReadAll(resp.Body)
+	// GETリクエスト
+	response, err := client.Do(request)
 	if err != nil {
-		log.Printf("Faild to read data(CSA): %v", err)
-		return nil, false
+		log.Print(err)
+		return false
 	}
 
-	// JSONを解析してCSAの構造体にデータを入れる
-	var csa CSA
-	json.Unmarshal(byteArray, &csa)
+	// データをバイナリとして取得
+	byteArray, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Print(err)
+		return false
+	}
 
-	// JSONから必要な情報を取り出して構造体に入れる
-	var contests []RawContest
-	for _, result := range csa.State.Contest {
+	// バイナリをAtCoderのデータにパース
+	var csaContest CSA
+	json.Unmarshal(byteArray, &csaContest)
+
+	var contests []Contest
+	for _, contest := range csaContest.State.Contest {
 		// データが存在しない or 正式なコンテストではない 場合に回避する
-		if result.StartTime == nil || result.EndTime == nil || result.SystemGenerated {
+		if contest.StartTime == nil || contest.EndTime == nil || contest.SystemGenerated {
 			continue
 		}
 
-		startTime := int64(result.StartTime.(float64))
+		startTime := int64(contest.StartTime.(float64))
 		// 過去のコンテストを回避する
 		if currentTime := time.Now().Unix(); currentTime >= startTime {
 			continue
 		}
 
-		endTime := int64(result.EndTime.(float64))
-		contest := RawContest{
-			Name:        result.LongName,
+		endTime := int64(contest.EndTime.(float64))
+		contests = append(contests, Contest{
+			ID:          contest.Name,
+			Title:       contest.LongName,
 			StartTime:   startTime,
-			URL:         "https://csacademy.com/contest/" + result.Name + "/",
 			Duration:    endTime - startTime,
-			WebSiteName: "CSA",
-			WebSiteURL:  "https://csacademy.com/",
-		}
-		contests = append(contests, contest)
+			WebSiteName: "csa",
+		})
 	}
 
-	return contests, true
+	module.Codeforces = append(module.Codeforces, contests...)
+	return true
 }

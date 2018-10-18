@@ -1,4 +1,4 @@
-package main
+package future
 
 import (
 	"encoding/json"
@@ -6,6 +6,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/urlfetch"
 )
 
 // Cedeforcesコンテスト情報
@@ -23,44 +26,45 @@ type CodeForces struct {
 	} `json:"result"`
 }
 
-// Codeforcesのコンテスト情報を返す
-func GetCodeForces() ([]RawContest, bool) {
-	// 外部からデータを取得
-	res, err := http.Get("https://codeforces.com/api/contest.list")
-	if err != nil {
-		log.Printf("Faild to GET reqest(Codeforces): %v", err)
-		return nil, false
-	}
-	defer res.Body.Close()
+func (module *ContestModule) SetCodeforces() bool {
+	var request *http.Request = module.Context.Request
+	context := appengine.NewContext(request)
 
-	// 取得したデータを読み込み[]byteを返してもらう
-	body, err := ioutil.ReadAll(res.Body)
+	client := urlfetch.Client(context)
+
+	// GETリクエスト
+	response, err := client.Get("https://codeforces.com/api/contest.list")
 	if err != nil {
-		log.Printf("Faild to read data(Codeforces): %v", err)
-		return nil, false
+		log.Print(err)
+		return false
 	}
 
-	// jsonを解析してCodeForcesの構造体にデータを入れる
-	var codeForces CodeForces
-	json.Unmarshal(body, &codeForces)
+	// データをバイナリとして取得
+	byteArray, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Print(err)
+		return false
+	}
 
-	// JSONから必要な情報をとりだして構造体に入れる
-	var contests []RawContest
-	for _, result := range codeForces.Result {
-		if result.Phase != "BEFORE" {
+	// バイナリをAtCoderのデータにパース
+	var codeforcesContest CodeForces
+	json.Unmarshal(byteArray, &codeforcesContest)
+
+	var contests []Contest
+	for _, contest := range codeforcesContest.Result {
+		if contest.Phase != "BEFORE" {
 			continue
 		}
 
-		contest := RawContest{
-			Name:        result.Name,
-			StartTime:   int64(result.StartTimeSeconds),
-			URL:         "http://codeforces.com/contests/" + strconv.Itoa(result.ID),
-			Duration:    int64(result.DurationSeconds),
-			WebSiteName: "Codeforces",
-			WebSiteURL:  "http://codeforces.com/",
-		}
-		contests = append(contests, contest)
+		contests = append(contests, Contest{
+			ID:          strconv.Itoa(contest.ID),
+			Title:       contest.Name,
+			StartTime:   int64(contest.StartTimeSeconds),
+			Duration:    int64(contest.DurationSeconds),
+			WebSiteName: "codeforces",
+		})
 	}
 
-	return contests, true
+	module.Codeforces = append(module.Codeforces, contests...)
+	return true
 }
