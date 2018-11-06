@@ -10,3 +10,7 @@
 - [yukicoder](https://yukicoder.me/)
 - [CS Academy](https://csacademy.com/)
 - [Codeforces](http://codeforces.com/)
+
+### blog
+- [初めてWebサイトを作ってみた](https://nomikura.hatenablog.com/entry/future_contest)
+- [Future Contestを無料運用にした](https://nomikura.hatenablog.com/entry/future_contest2)
